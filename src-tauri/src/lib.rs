@@ -14,10 +14,12 @@ use std::thread;
 use std::time::Duration;
 use tauri::Manager;
 use tauri::{Emitter, State, path::BaseDirectory}; // Added BaseDirectory
+use tauri::menu::{MenuItem, MenuBuilder}; // Import MenuBuilder, remove MenuSeparator
+use tauri::tray::TrayIconBuilder; // Added for Tray Icon
 use tauri_plugin_positioner::{Position, WindowExt};
 use cpal::traits::{DeviceTrait, HostTrait};
 use crossbeam_channel::unbounded; // Use crossbeam channel (Receiver import removed)
-use rodio::{Sink}; // Added rodio imports
+use rodio::Sink; // Added rodio imports
 use std::fs::File; // Added File import
 use std::io::BufReader; // Added BufReader import
 
@@ -210,7 +212,67 @@ pub async fn run() { // Make run async
         .manage(recording_flag.clone()) // Manage the recording flag
         // SoundStateRef management removed
         .setup(move |app| {
-            // --- Initialize Sound State Removed ---
+            #[cfg(target_os = "macos")]{
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            };
+
+            // --- Setup System Tray ---
+            let app_handle_tray = app.handle().clone(); // Clone handle for tray event handler
+            // Create menu items first
+            let show_chat_i = MenuItem::with_id(&app_handle_tray, "show_chat", "Show Chat", true, None::<&str>)?;
+            let show_settings_i = MenuItem::with_id(&app_handle_tray, "show_settings", "Settings", true, None::<&str>)?;
+            let quit_i = MenuItem::with_id(&app_handle_tray, "quit", "Exit", true, None::<&str>)?;
+
+            // Use MenuBuilder
+            let tray_menu = MenuBuilder::new(&app_handle_tray)
+                .item(&show_chat_i)
+                .item(&show_settings_i)
+                .separator() // Use the builder method for separator
+                .item(&quit_i)
+                .build()?;
+
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().cloned().ok_or("Failed to get default window icon")?)
+                .tooltip("Vaiced")
+                .menu(&tray_menu)
+                .on_menu_event(move |app, event| {
+                    match event.id.as_ref() {
+                        "show_chat" => {
+                            if let Some(window) = app.get_webview_window("ai_interaction") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            } else {
+                                eprintln!("ai_interaction window not found");
+                            }
+                        }
+                        "show_settings" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            } else {
+                                eprintln!("main window not found");
+                            }
+                        }
+                        "quit" => {
+                            println!("Exit requested from tray menu.");
+                            app.exit(0);
+                        }
+                        _ => {}
+                    }
+                })
+                // Optional: Handle tray icon click events if needed
+                // .on_tray_icon_event(|tray, event| {
+                //     if let TrayIconEvent::Click { .. } = event {
+                //         // Example: toggle main window on left click
+                //         // let app = tray.app_handle();
+                //         // if let Some(window) = app.get_webview_window("main") {
+                //         //     let _ = window.show();
+                //         //     let _ = window.set_focus();
+                //         // }
+                //     }
+                // })
+                .build(app)?;
+
 
             // --- Setup Global Shortcut ---
             #[cfg(desktop)]
@@ -219,17 +281,13 @@ pub async fn run() { // Make run async
                     Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
                 };
 
-                // Define shortcuts
                 let recorder_shortcut = Shortcut::new(Some(Modifiers::META), Code::Backquote);
                 let ai_shortcut = Shortcut::new(Some(Modifiers::ALT), Code::Backquote); // ALT for Option key
 
-                // --- Recorder Window Setup ---
                 if let Some(recorder_window) = app.get_webview_window("recorder") {
-                    println!("Setting up recorder window (TopCenter, hidden)...");
-                    let _ = recorder_window.move_window(Position::TopCenter); // Changed position
+                    let _ = recorder_window.move_window(Position::TopCenter); 
                     let _ = recorder_window.hide();
 
-                    // Handle OS close request
                     let app_handle_listener = app.handle().clone();
                     let app_state_listener = app_state.clone();
                     let recording_flag_listener = recording_flag.clone();
@@ -582,8 +640,10 @@ pub async fn run() { // Make run async
         .build(tauri::generate_context!()) // Use build instead of run for async setup
         .expect("error while building tauri application")
         .run(|_app_handle, event| match event { // Use run loop for async runtime
-            tauri::RunEvent::ExitRequested { api, .. } => {
-                api.prevent_exit();
+            tauri::RunEvent::ExitRequested { .. } => {
+                // Allow the app to exit naturally when requested,
+                // including when triggered by app.exit(0) from the tray menu.
+                println!("Exit requested, allowing exit.");
             }
             _ => {}
         });
