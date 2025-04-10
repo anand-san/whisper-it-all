@@ -21,8 +21,15 @@ import { cn } from "../../../lib/utils";
 import { Button } from "../../../components/ui/button";
 import { MarkdownText } from "./markdown-text";
 import { TooltipIconButton } from "./tooltip-icon-button";
+import { RecorderState } from "../hooks/useAiInteraction";
+import RecordingIndicator from "../../../components/RecordingIndicator";
+import TranscribingIndicator from "../../../components/TranscribingIndicator";
 
-export const Thread: FC = () => {
+interface ThreadProps {
+  recorderState?: RecorderState; // Add the prop
+}
+
+export const Thread: FC<ThreadProps> = ({ recorderState = "idle" }) => {
   return (
     <ThreadPrimitive.Root
       className="box-border flex h-full w-full flex-col overflow-hidden rounded-md"
@@ -47,7 +54,9 @@ export const Thread: FC = () => {
 
         <div className="sticky bottom-0 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-2">
           <ThreadScrollToBottom />
-          <Composer />
+          {recorderState === "recording" && <RecordingIndicator />}
+          {recorderState === "transcribing" && <TranscribingIndicator />}
+          {recorderState === "idle" && <Composer />}
         </div>
       </ThreadPrimitive.Viewport>
     </ThreadPrimitive.Root>

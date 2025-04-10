@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "vaiced-tauri",
+  "productName": "vaiced",
   "version": "0.1.0",
-  "identifier": "com.vaiced-tauri.app",
+  "identifier": "com.vaiced.app",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "vaiced-tauri",
+        "title": "Vaiced",
         "width": 400,
         "height": 550,
         "visible": true,
@@ -29,7 +29,7 @@
       },
       {
         "label": "recorder",
-        "title": "Recording",
+        "title": "Vaiced - Recorder",
         "width": 200,
         "height": 100,
         "decorations": false,
@@ -49,7 +49,7 @@
       },
       {
         "label": "ai_interaction",
-        "title": "AI Interaction",
+        "title": "Vaiced - Chat",
         "url": "/ai-interaction",
         "width": 400,
         "height": 250,
