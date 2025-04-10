@@ -4,6 +4,7 @@ import { Thread } from "./assistant-ui/thread";
 import { ThreadList } from "./assistant-ui/thread-list";
 import { useChat } from "@ai-sdk/react";
 import { MutableRefObject, useEffect, useState } from "react";
+import { useModelSelection } from "./context/ModelSelectionContext";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +21,7 @@ import {
 
 interface AssistantProps {
   sendMessageRef: MutableRefObject<SendMessageFn | null>;
-  setTranscriptionStatusRef: MutableRefObject<SetTranscriptionStatusFn | null>; // Add the new prop
+  setTranscriptionStatusRef: MutableRefObject<SetTranscriptionStatusFn | null>;
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
@@ -28,8 +29,15 @@ export const Assistant = ({
   sendMessageRef,
   setTranscriptionStatusRef,
 }: AssistantProps) => {
+  const { selectedModelId } = useModelSelection();
   const CHAT_API_URL = `${API_BASE}/api/chat`;
-  const chat = useChat({ api: CHAT_API_URL });
+
+  const chat = useChat({
+    api: CHAT_API_URL,
+    body: {
+      modelId: selectedModelId,
+    },
+  });
 
   const { append } = chat;
   const runtime = useVercelUseChatRuntime(chat);

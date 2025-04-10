@@ -69,18 +69,27 @@ app.post(
   }
 );
 
-// --- Streaming Chat Endpoint ---
 app.post(
   "/api/chat", // Primary endpoint for useChat
   zValidator("json", StreamChatSchema), // Validate using the streaming schema
   async (c) => {
     try {
-      const { messages, system } = c.req.valid("json"); // Get messages and system prompt
-
-      // Call the streaming service function without tools for now
+      // Get messages, system prompt, and optional modelId from validated JSON body
+      const { messages, system, modelId } = c.req.valid("json");
+      console.log(
+        "Received messages:",
+        messages,
+        "System:",
+        system,
+        "ModelId:",
+        modelId
+      );
+      // Call the streaming service function, passing the modelId
       const result = await streamChatCompletion(
         messages as CoreMessage[],
-        system
+        system,
+        undefined, // Pass undefined for tools for now
+        modelId // Pass the extracted modelId
       );
 
       // Convert the result to the AI SDK RSC format
@@ -99,13 +108,10 @@ app.post(
   }
 );
 
-// --- Server Export for Bun ---
 const port = 3000; // Define a port for the API server
 console.log(`Hono server ready on http://localhost:${port}`);
 console.log("Run with: bun run backend/core/src/index.ts");
 
-// Bun automatically uses the default export with a fetch method.
-// We can optionally export the port.
 export default {
   port: port,
   fetch: app.fetch,

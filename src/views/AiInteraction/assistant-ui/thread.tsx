@@ -5,19 +5,33 @@ import {
   MessagePrimitive,
   ThreadPrimitive,
 } from "@assistant-ui/react";
-import type { FC } from "react";
+import { FC } from "react"; // Removed 'type' as it's used as a value below
 import {
   ArrowDownIcon,
-  CheckIcon,
+  CheckIcon, // Keep CheckIcon
   ChevronLeftIcon,
   ChevronRightIcon,
   CopyIcon,
   PencilIcon,
   RefreshCwIcon,
   SendHorizontalIcon,
+  Settings2Icon, // Icon for the trigger button
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
-
+import { useModelSelection } from "../context/ModelSelectionContext"; // Import context hook
+import {
+  Sheet,
+  SheetTrigger,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "../../../components/ui/sheet"; // Import Sheet components
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "../../../components/ui/accordion"; // Import Accordion components
 import { Button } from "../../../components/ui/button";
 import { MarkdownText } from "./markdown-text";
 import { TooltipIconButton } from "./tooltip-icon-button";
@@ -30,36 +44,126 @@ interface ThreadProps {
 }
 
 export const Thread: FC<ThreadProps> = ({ recorderState = "idle" }) => {
+  // Get model selection state and functions from context
+  const {
+    selectedModelId,
+    setSelectedModelId,
+    modelProviders,
+    isModelSheetOpen,
+    setIsModelSheetOpen,
+    getModelNameById,
+  } = useModelSelection();
+
+  const selectedModelName =
+    getModelNameById(selectedModelId) || selectedModelId;
+
   return (
-    <ThreadPrimitive.Root
-      className="box-border flex h-full w-full flex-col overflow-hidden rounded-md"
-      style={{
-        ["--thread-max-width" as string]: "42rem",
-      }}
-    >
-      <ThreadPrimitive.Viewport className="flex h-full w-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit">
-        <ThreadWelcome />
+    // Wrap the trigger and define the Sheet content
+    <Sheet open={isModelSheetOpen} onOpenChange={setIsModelSheetOpen}>
+      <ThreadPrimitive.Root
+        className="box-border flex h-full w-full flex-col overflow-hidden rounded-md"
+        style={{
+          ["--thread-max-width" as string]: "42rem",
+        }}
+      >
+        <ThreadPrimitive.Viewport className="flex h-full w-full flex-col items-center overflow-y-scroll scroll-smooth bg-inherit">
+          <ThreadWelcome />
 
-        <ThreadPrimitive.Messages
-          components={{
-            UserMessage: UserMessage,
-            EditComposer: EditComposer,
-            AssistantMessage: AssistantMessage,
-          }}
-        />
+          <ThreadPrimitive.Messages
+            components={{
+              UserMessage: UserMessage,
+              EditComposer: EditComposer,
+              AssistantMessage: AssistantMessage,
+            }}
+          />
 
-        <ThreadPrimitive.If empty={false}>
-          <div className="min-h-8 flex-grow" />
-        </ThreadPrimitive.If>
+          <ThreadPrimitive.If empty={false}>
+            <div className="min-h-8 flex-grow" />
+          </ThreadPrimitive.If>
 
-        <div className="sticky bottom-0 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-2">
-          <ThreadScrollToBottom />
-          {recorderState === "recording" && <RecordingIndicator />}
-          {recorderState === "transcribing" && <TranscribingIndicator />}
-          {recorderState === "idle" && <Composer />}
-        </div>
-      </ThreadPrimitive.Viewport>
-    </ThreadPrimitive.Root>
+          <div className="sticky bottom-0 flex w-full max-w-[var(--thread-max-width)] flex-col items-center justify-end rounded-t-lg bg-inherit pb-2">
+            <ThreadScrollToBottom />
+
+            {/* Model Selector Trigger and Composer Area */}
+            <div className="flex flex-col items-center w-full max-w-[var(--thread-max-width)] gap-2">
+              {recorderState === "recording" && <RecordingIndicator />}
+              {recorderState === "transcribing" && <TranscribingIndicator />}
+              {recorderState === "idle" && (
+                <>
+                  {/* Model Selector Trigger Button */}
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-1 text-xs text-muted-foreground"
+                    >
+                      <Settings2Icon className="mr-1 h-3 w-3" />
+                      {selectedModelName}
+                    </Button>
+                  </SheetTrigger>
+                  <Composer />
+                </>
+              )}
+            </div>
+          </div>
+        </ThreadPrimitive.Viewport>
+
+        {/* Sheet Content for Model Selection */}
+        <SheetContent
+          side="right"
+          className="w-[250px] sm:w-[400px] p-0 gap-0 rounded-lg"
+        >
+          <SheetHeader className="border-b">
+            <SheetTitle>Your Models</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <Accordion type="single" collapsible className="w-full">
+              {modelProviders.map((provider) => (
+                <AccordionItem
+                  key={provider.providerName}
+                  value={provider.providerName}
+                >
+                  <AccordionTrigger>
+                    <div className="flex items-center justify-start">
+                      <img
+                        src={provider.image}
+                        alt={provider.providerName}
+                        className="h-6 w-6 mr-2 rounded-full"
+                      />
+                      {provider.providerName}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="flex flex-col gap-1 pl-2">
+                      {provider.models.map((model) => (
+                        <Button
+                          key={model.id}
+                          variant="ghost"
+                          size="sm"
+                          className={cn(
+                            "w-full justify-start text-left h-auto py-1.5",
+                            selectedModelId === model.id && "bg-accent" // Highlight selected
+                          )}
+                          onClick={() => {
+                            setSelectedModelId(model.id);
+                            setIsModelSheetOpen(false); // Close sheet on selection
+                          }}
+                        >
+                          {selectedModelId === model.id && (
+                            <CheckIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                          )}
+                          <span className="flex-1">{model.name}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </SheetContent>
+      </ThreadPrimitive.Root>
+    </Sheet>
   );
 };
 

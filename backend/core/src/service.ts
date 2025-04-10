@@ -2,6 +2,7 @@ import { openai, createOpenAI } from "@ai-sdk/openai";
 import OpenAI from "openai";
 import { streamText, CoreMessage, StreamTextResult } from "ai"; // Import StreamTextResult
 import { z } from "zod";
+import { registry } from "./registry"; // Import the registry
 
 // Configuration (will be moved to separate config.ts)
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
@@ -19,12 +20,6 @@ const DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant. Respond concisely.";
 
 // Configure OpenAI client to use Groq API
 const groqClient = new OpenAI({
-  apiKey: GROQ_API_KEY,
-  baseURL: GROQ_BASE_URL,
-});
-
-// Create a specific Groq provider instance using createOpenAI
-const groq = createOpenAI({
   apiKey: GROQ_API_KEY,
   baseURL: GROQ_BASE_URL,
 });
@@ -83,16 +78,15 @@ export const generateChatCompletion = async (text: string): Promise<string> => {
 export const streamChatCompletion = async (
   messages: CoreMessage[],
   system?: string,
-  tools?: Record<string, { parameters: any }>
+  tools?: Record<string, { parameters: any }>,
+  modelId?: string
 ): Promise<StreamTextResult<any, any>> => {
   try {
-    if (!GROQ_API_KEY) {
-      throw new Error("API key is not configured");
-    }
+    const defaultModelId = "groq:llama-3.3-70b-versatile";
+    const selectedModelId = modelId || defaultModelId;
 
-    // Create the streamText configuration
-    const result = await streamText({
-      model: groq(CHAT_MODELS.llama3), // Default to Groq, can be changed for provider flexibility
+    const result = streamText({
+      model: registry.languageModel(selectedModelId as any),
       messages,
       system: system || DEFAULT_SYSTEM_PROMPT,
       tools,
@@ -103,7 +97,6 @@ export const streamChatCompletion = async (
     return result;
   } catch (error) {
     console.error("Streaming chat completion error:", error);
-    // Re-throw or handle as appropriate for the caller (e.g., Tauri command)
     throw new Error(
       `Streaming chat failed: ${
         error instanceof Error ? error.message : String(error)
@@ -141,4 +134,5 @@ export const StreamChatSchema = z.object({
   ),
   system: z.string().optional(),
   tools: z.any().optional(), // Accept any tools format to handle different client implementations
+  modelId: z.string().optional(), // Add optional modelId field
 });
