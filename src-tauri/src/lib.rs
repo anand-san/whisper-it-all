@@ -372,11 +372,27 @@ pub async fn run() {
                                                         emit_state_change(&app_handle_clone, RecorderState::Recording);
                                                         drop(current_app_state); // Release lock before sync operations
 
-                                                        // Show window & focus (sync)
-                                                        let _ = recorder_window.show();
-                                                        let _ = recorder_window.set_focus();
+                                                        // --- Check if main window is visible ---
+                                                        let main_window_visible = match app_handle_clone.get_webview_window("main") {
+                                                            Some(main_window) => main_window.is_visible().unwrap_or(false), // Assume not visible on error
+                                                            None => {
+                                                                eprintln!("Main window not found during shortcut press check.");
+                                                                false // Assume not visible if window doesn't exist
+                                                            }
+                                                        };
 
-                                                        // Play start sound using rodio
+                                                        // Show window & focus (sync) - Only if main window wasn't visible
+                                                        if !main_window_visible {
+                                                            println!("Main window not visible. Showing recorder window.");
+                                                            let _ = recorder_window.show();
+                                                            let _ = recorder_window.set_focus();
+                                                        } else {
+                                                            println!("Main window is visible. Skipping recorder window display.");
+                                                        }
+                                                        // --- End Check ---
+
+
+                                                        // Play start sound using rodio (always play)
                                                         play_sound_rodio(&app_handle_clone, "record-start.mp3");
 
                                                         // Reset recording flag (sync atomic)
