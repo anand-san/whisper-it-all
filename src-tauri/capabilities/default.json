@@ -15,6 +15,18 @@
     "core:window:allow-create",
     "core:window:allow-close",
     "core:window:allow-hide",
-    "core:window:allow-start-dragging"
+    "core:window:allow-start-dragging",
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://**"
+        },
+
+        {
+          "url": "http://**"
+        }
+      ]
+    }
   ]
 }

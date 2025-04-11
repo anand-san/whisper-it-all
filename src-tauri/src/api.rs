@@ -1,5 +1,5 @@
-use reqwest::header::{HeaderValue, AUTHORIZATION, CONTENT_TYPE};
-use reqwest::multipart::{Form, Part};
+use tauri_plugin_http::reqwest::header::{HeaderValue, AUTHORIZATION, CONTENT_TYPE};
+use tauri_plugin_http::reqwest::multipart::{Form, Part};
 use serde::Deserialize;
 use std::time::Duration;
 
@@ -18,9 +18,9 @@ struct ChatResponse {
 
 // --- Constants ---
 
-// Using lazy_static for the global reqwest client
+// Using lazy_static for the global reqwest client (now from the plugin)
 lazy_static::lazy_static! {
-    static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::builder()
+    static ref HTTP_CLIENT: tauri_plugin_http::reqwest::Client = tauri_plugin_http::reqwest::Client::builder()
         .timeout(Duration::from_secs(120)) // Set a reasonable timeout (e.g., 2 minutes)
         .build()
         .expect("Failed to build reqwest client");

@@ -1,27 +1,30 @@
 // Declare modules
+mod api;
 mod audio;
-mod state;
-mod api; // Declare the new api module
+mod state; // Declare the new api module
 
 // Use necessary items from modules and external crates
 use state::{
-    AppStateRef, AudioConfig, AudioConfigRef, // Use AudioConfigRef
-    RecorderState, RecordingFlag, // Use RecordingFlag (Removed SoundState, SoundStateRef)
+    AppStateRef,
+    AudioConfig,
+    AudioConfigRef, // Use AudioConfigRef
+    RecorderState,
+    RecordingFlag, // Use RecordingFlag (Removed SoundState, SoundStateRef)
 };
 use std::sync::atomic::{AtomicBool, Ordering}; // Use Atomics
-// Removed unused: use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
-use tauri::Manager;
-use tauri::{Emitter, State, path::BaseDirectory}; // Added BaseDirectory
-use tauri::menu::{MenuItem, MenuBuilder}; // Import MenuBuilder, remove MenuSeparator
-use tauri::tray::TrayIconBuilder; // Added for Tray Icon
-use tauri_plugin_positioner::{Position, WindowExt};
+                                               // Removed unused: use std::sync::Arc;
 use cpal::traits::{DeviceTrait, HostTrait};
 use crossbeam_channel::unbounded; // Use crossbeam channel (Receiver import removed)
 use rodio::Sink; // Added rodio imports
 use std::fs::File; // Added File import
-use std::io::BufReader; // Added BufReader import
+use std::io::BufReader;
+use std::thread;
+use std::time::Duration;
+use tauri::menu::{MenuBuilder, MenuItem}; // Import MenuBuilder, remove MenuSeparator
+use tauri::tray::TrayIconBuilder; // Added for Tray Icon
+use tauri::Manager;
+use tauri::{path::BaseDirectory, Emitter, State}; // Added BaseDirectory
+use tauri_plugin_positioner::{Position, WindowExt}; // Added BufReader import
 
 // --- Helper Functions ---
 
@@ -108,7 +111,9 @@ fn play_sound_rodio(app_handle: &tauri::AppHandle, sound_name: &str) {
                                 sink.sleep_until_end();
                                 println!("Played sound: {:?}", sound_path);
                             }
-                            Err(e) => eprintln!("Error decoding sound file {:?}: {}", sound_path, e),
+                            Err(e) => {
+                                eprintln!("Error decoding sound file {:?}: {}", sound_path, e)
+                            }
                         }
                     }
                     Err(e) => eprintln!("Error opening sound file {:?}: {}", sound_path, e),
@@ -118,7 +123,6 @@ fn play_sound_rodio(app_handle: &tauri::AppHandle, sound_name: &str) {
         }
     });
 }
-
 
 // --- Tauri Commands ---
 
@@ -144,7 +148,8 @@ fn show_window(window: tauri::AppHandle) -> Result<(), String> {
 
 /// Handles request from frontend or OS to close the recorder window and reset state.
 #[tauri::command]
-async fn request_close_recorder( // Make async to handle async mutex
+async fn request_close_recorder(
+    // Make async to handle async mutex
     app_handle: tauri::AppHandle,
     // audio_config_ref: State<'_, AudioConfigRef>, // Config doesn't need reset
     app_state_ref: State<'_, AppStateRef>,
@@ -180,26 +185,25 @@ async fn request_close_recorder( // Make async to handle async mutex
 
 /// New command callable by the frontend to get AI response for given text.
 #[tauri::command]
-async fn get_ai_response(
-    transcription: String,
-) -> Result<String, String> {
+async fn get_ai_response(transcription: String) -> Result<String, String> {
     println!("Executing get_ai_response command for: '{}'", transcription);
     api::get_ai_response_local(transcription).await
 }
-
 
 // --- Application Entry Point ---
 
 // Make run async because we use .await for mutexes inside setup/commands
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 #[tokio::main] // Use tokio main runtime
-pub async fn run() { // Make run async
+pub async fn run() {
+    // Make run async
     // Initialize states
     let audio_config = AudioConfigRef::new(tokio::sync::Mutex::new(AudioConfig::new())); // Use tokio Mutex
     let app_state = AppStateRef::new(tokio::sync::Mutex::new(RecorderState::Idle)); // Use tokio Mutex
     let recording_flag = RecordingFlag::new(AtomicBool::new(false)); // Initialize recording flag
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_positioner::init())
         .invoke_handler(tauri::generate_handler![
             hide_window,

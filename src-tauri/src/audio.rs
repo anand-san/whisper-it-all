@@ -24,7 +24,10 @@ pub(crate) fn record_audio_stream(
     let stream_config: cpal::StreamConfig = config.into();
     let flag_clone = recording_flag.clone(); // Clone Arc for the stream closure
 
-    println!("Audio Stream: {} Hz, {} ch, {:?}", stream_config.sample_rate.0, stream_config.channels, sample_format);
+    println!(
+        "Audio Stream: {} Hz, {} ch, {:?}",
+        stream_config.sample_rate.0, stream_config.channels, sample_format
+    );
 
     // --- Stream Building ---
     // Closure to handle data processing and sending
@@ -56,7 +59,10 @@ pub(crate) fn record_audio_stream(
         cpal::SampleFormat::U16 => device.build_input_stream(
             &stream_config,
             move |data: &[u16], _: &_| {
-                let converted_data: Vec<i16> = data.iter().map(|&s| s.saturating_sub(32768) as i16).collect();
+                let converted_data: Vec<i16> = data
+                    .iter()
+                    .map(|&s| s.saturating_sub(32768) as i16)
+                    .collect();
                 process_data(&converted_data);
             },
             err_fn,
@@ -65,7 +71,10 @@ pub(crate) fn record_audio_stream(
         cpal::SampleFormat::F32 => device.build_input_stream(
             &stream_config,
             move |data: &[f32], _: &_| {
-                let converted_data: Vec<i16> = data.iter().map(|&s| (s.clamp(-1.0, 1.0) * 32767.0) as i16).collect();
+                let converted_data: Vec<i16> = data
+                    .iter()
+                    .map(|&s| (s.clamp(-1.0, 1.0) * 32767.0) as i16)
+                    .collect();
                 process_data(&converted_data);
             },
             err_fn,
@@ -76,7 +85,9 @@ pub(crate) fn record_audio_stream(
     .map_err(|e| format!("Could not build input stream: {}", e))?;
 
     // --- Stream Playback and Recording Loop ---
-    stream.play().map_err(|e| format!("Could not start stream: {}", e))?;
+    stream
+        .play()
+        .map_err(|e| format!("Could not start stream: {}", e))?;
     println!("Recording stream started. Sending data via channel.");
 
     // Loop relies on the atomic recording_flag.
