@@ -242,11 +242,12 @@ pub async fn run() {
                 .on_menu_event(move |app, event| {
                     match event.id.as_ref() {
                         "show_chat" => {
-                            if let Some(window) = app.get_webview_window("ai_interaction") {
+                            // Now targets the main window which displays the chat UI
+                            if let Some(window) = app.get_webview_window("main") {
                                 let _ = window.show();
                                 let _ = window.set_focus();
                             } else {
-                                eprintln!("ai_interaction window not found");
+                                eprintln!("main (chat) window not found");
                             }
                         }
                         "show_settings" => {
@@ -319,15 +320,16 @@ pub async fn run() {
                     eprintln!("Failed to get recorder window during setup.");
                 }
 
-                // --- AI Interaction Window Setup ---
-                if let Some(ai_window) = app.get_webview_window("ai_interaction") {
-                    println!("Setting up AI interaction window (TopRight, hidden)...");
-                    let _ = ai_window.move_window(Position::TopRight); // Set position
-                    let _ = ai_window.hide(); // Hide initially
+                // --- AI Interaction Window Setup (Now the Main Window) ---
+                if let Some(main_window) = app.get_webview_window("main") {
+                    println!("Setting up main (AI interaction) window (TopRight, initially visible)...");
+                    // Position the window programmatically using the positioner plugin
+                    let _ = main_window.move_window(Position::TopRight); // Restore programmatic positioning
+                    // Window is visible by default as per tauri.conf.json
                     // Optional: Add close handler if needed, similar to recorder
-                    // ai_window.on_window_event(...)
+                    // main_window.on_window_event(...)
                 } else {
-                    eprintln!("Failed to get ai_interaction window during setup.");
+                    eprintln!("Failed to get main window during setup.");
                 }
 
 
@@ -528,21 +530,22 @@ pub async fn run() {
                                                                 match api::transcribe_audio_local(wav_data).await {
                                                                     Ok(text) => {
                                                                         println!("Transcription successful: '{}'", text);
-                                                                        // --- Handle AI Interaction Window Directly ---
-                                                                        if let Some(ai_window) = app_handle_post.get_webview_window("ai_interaction") {
-                                                                            println!("Found ai_interaction window, showing and sending data...");
+                                                                        // --- Handle Main (AI Interaction) Window Directly ---
+                                                                        if let Some(main_window) = app_handle_post.get_webview_window("main") {
+                                                                            println!("Found main (AI interaction) window, sending data...");
                                                                             let payload = serde_json::json!({ "text": text });
-                                                                            // Show, focus, and emit directly to the window
+                                                                            // Emit directly to the main window
                                                                             // Use a separate task to avoid blocking the post-processing flow if window interaction hangs
                                                                             tokio::spawn(async move {
-                                                                                if let Err(e) = ai_window.show() { eprintln!("Failed to show ai_interaction window: {}", e); } // Removed .await
-                                                                                if let Err(e) = ai_window.set_focus() { eprintln!("Failed to focus ai_interaction window: {}", e); } // Removed .await
-                                                                                if let Err(e) = ai_window.emit("trigger_ai_interaction", &payload) {
-                                                                                    eprintln!("Failed to emit trigger_ai_interaction to ai_interaction window: {}", e);
+                                                                                // Window should already be visible/focused if user triggered recording
+                                                                                // if let Err(e) = main_window.show() { eprintln!("Failed to show main window: {}", e); }
+                                                                                // if let Err(e) = main_window.set_focus() { eprintln!("Failed to focus main window: {}", e); }
+                                                                                if let Err(e) = main_window.emit("trigger_ai_interaction", &payload) {
+                                                                                    eprintln!("Failed to emit trigger_ai_interaction to main window: {}", e);
                                                                                 }
                                                                             });
                                                                         } else {
-                                                                            eprintln!("Error: ai_interaction window not found. Cannot display transcription.");
+                                                                            eprintln!("Error: main window not found. Cannot display transcription.");
                                                                             // Optionally emit a global error event if needed
                                                                         }
                                                                     }
@@ -606,17 +609,17 @@ pub async fn run() {
                                 // --- AI Shortcut Logic ---
                                 } else if shortcut_clone == ai_shortcut {
                                     if event.state() == ShortcutState::Pressed {
-                                        println!("AI Shortcut (Alt+`) Pressed: Showing AI Interaction Window");
-                                        if let Some(ai_window) = app_handle_clone.get_webview_window("ai_interaction") {
+                                        println!("AI Shortcut (Alt+`) Pressed: Showing Main (AI Interaction) Window");
+                                        if let Some(main_window) = app_handle_clone.get_webview_window("main") {
                                             // Use tokio::spawn for window operations to avoid blocking handler
                                             tokio::spawn(async move {
-                                                // Position might have already been set in setup, but setting again ensures it if setup failed
-                                                if let Err(e) = ai_window.move_window(Position::TopRight) { eprintln!("Failed to move ai_interaction window: {}", e); }
-                                                if let Err(e) = ai_window.show() { eprintln!("Failed to show ai_interaction window: {}", e); }
-                                                if let Err(e) = ai_window.set_focus() { eprintln!("Failed to focus ai_interaction window: {}", e); }
+                                                // Position is set in config, window should be visible
+                                                // if let Err(e) = main_window.move_window(Position::TopRight) { eprintln!("Failed to move main window: {}", e); }
+                                                if let Err(e) = main_window.show() { eprintln!("Failed to show main window: {}", e); }
+                                                if let Err(e) = main_window.set_focus() { eprintln!("Failed to focus main window: {}", e); }
                                             });
                                         } else {
-                                            eprintln!("AI Interaction window not found in shortcut handler.");
+                                            eprintln!("Main (AI Interaction) window not found in shortcut handler.");
                                         }
                                     }
                                     // No specific action needed on release for the AI shortcut

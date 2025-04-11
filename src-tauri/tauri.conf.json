@@ -15,15 +15,21 @@
       {
         "label": "main",
         "title": "Vaiced",
-        "width": 400,
-        "height": 550,
+        "url": "/ai-interaction",
+        "width": 350,
+        "height": 450,
+        "decorations": true,
         "visible": true,
+        "resizable": true,
+        "fullscreen": false,
+        "focus": true,
+        "alwaysOnTop": true,
+        "transparent": true,
         "hiddenTitle": true,
         "titleBarStyle": "Overlay",
-        "transparent": true,
         "windowEffects": {
           "effects": ["blur", "acrylic"],
-          "radius": 20,
+          "radius": 60,
           "color": "#000000"
         }
       },
@@ -41,27 +47,6 @@
         "fullscreen": false,
         "maximized": false,
         "transparent": true,
-        "windowEffects": {
-          "effects": ["blur", "acrylic"],
-          "radius": 60,
-          "color": "#000000"
-        }
-      },
-      {
-        "label": "ai_interaction",
-        "title": "Vaiced - Chat",
-        "url": "/ai-interaction",
-        "width": 400,
-        "height": 250,
-        "decorations": true,
-        "visible": false,
-        "resizable": true,
-        "fullscreen": false,
-        "focus": false,
-        "alwaysOnTop": true,
-        "transparent": true,
-        "hiddenTitle": true,
-        "titleBarStyle": "Overlay",
         "windowEffects": {
           "effects": ["blur", "acrylic"],
           "radius": 60,

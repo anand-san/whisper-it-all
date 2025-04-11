@@ -225,7 +225,7 @@ const Composer: FC = () => {
   return (
     <ComposerPrimitive.Root className="focus-within:border-ring/20 flex w-full flex-wrap items-end rounded-lg border bg-background/80 px-2.5 shadow-sm transition-colors ease-in">
       <ComposerPrimitive.Input
-        rows={1}
+        rows={2}
         autoFocus
         placeholder="Write a message..."
         className="placeholder:text-muted-foreground max-h-40 flex-grow resize-none border-none px-2 py-4 text-sm outline-none focus:ring-0 disabled:cursor-not-allowed"
