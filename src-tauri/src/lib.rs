@@ -106,6 +106,7 @@ fn play_sound_rodio(app_handle: &tauri::AppHandle, sound_name: &str) {
                         match rodio::Decoder::new(file) {
                             Ok(source) => {
                                 let sink = Sink::try_new(&stream_handle).unwrap();
+                                sink.set_volume(0.5); // Set volume to 50%
                                 sink.append(source);
                                 // Wait for the sound to finish playing before the thread exits
                                 sink.sleep_until_end();
@@ -537,9 +538,9 @@ pub async fn run() {
                                                                             // Emit directly to the main window
                                                                             // Use a separate task to avoid blocking the post-processing flow if window interaction hangs
                                                                             tokio::spawn(async move {
-                                                                                // Window should already be visible/focused if user triggered recording
-                                                                                // if let Err(e) = main_window.show() { eprintln!("Failed to show main window: {}", e); }
-                                                                                // if let Err(e) = main_window.set_focus() { eprintln!("Failed to focus main window: {}", e); }
+                                                                                // Ensure window is visible and focused before emitting
+                                                                                if let Err(e) = main_window.show() { eprintln!("Failed to show main window: {}", e); }
+                                                                                if let Err(e) = main_window.set_focus() { eprintln!("Failed to focus main window: {}", e); }
                                                                                 if let Err(e) = main_window.emit("trigger_ai_interaction", &payload) {
                                                                                     eprintln!("Failed to emit trigger_ai_interaction to main window: {}", e);
                                                                                 }
@@ -557,7 +558,9 @@ pub async fn run() {
                                                                     }
                                                                 }
                                                             } else {
-                                                                println!("Post-processing: Duration <= 1s. Resetting state.");
+                                                                println!("Post-processing: Duration <= 1s. Playing end sound and resetting state.");
+                                                                // Play end sound only for short recordings
+                                                                play_sound_rodio(&app_handle_post, "record-end.mp3");
                                                             }
 
                                                             // Reset state to Idle
@@ -586,8 +589,7 @@ pub async fn run() {
                                                     // 1. Immediately hide the window (sync)
                                                     let _ = recorder_window.hide();
 
-                                                    // 2. Play end sound immediately on release
-                                                    play_sound_rodio(&app_handle_clone, "record-end.mp3");
+                                                    // 2. Play end sound call removed from here - moved to post-processing task for short recordings
 
                                                     // 3. Signal recording thread and post-processing task to stop (sync atomic)
                                                     println!("Setting recording flag to false.");
