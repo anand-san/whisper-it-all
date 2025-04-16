@@ -60,4 +60,8 @@ export const availableModelsRegistry: ModelProvider[] = [
   },
 ];
 
-export const DEFAULT_MODEL_ID = "mistral:mistral-large-latest";
+export const DEFAULT_MODEL_ID =
+  "groq:meta-llama/llama-4-scout-17b-16e-instruct";
+
+export const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";

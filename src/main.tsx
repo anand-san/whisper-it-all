@@ -2,6 +2,7 @@ import ReactDOM from "react-dom/client";
 import WindowManager from "./WindowManager";
 import "./styles/globals.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ErrorBoundary from "./components/ErrorBoundary"; // Import ErrorBoundary
 
 // Interface no longer needed here
 // interface TranscriptionPayload {
@@ -21,5 +22,8 @@ const RootComponent = () => {
   );
 };
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <RootComponent />
+  // Wrap RootComponent with ErrorBoundary
+  <ErrorBoundary>
+    <RootComponent />
+  </ErrorBoundary>
 );

@@ -32,6 +32,9 @@ lazy_static = "1.4"
 dotenvy = "0.15"
 crossbeam-channel = "0.5"
 tauri-plugin-http = { version = "2", features = ["multipart", "json"] }
+xcap = "0.4.1" # Replaced screenshots with xcap
+image = { version = "0.25", features = ["png"] }
+thiserror = "1.0"
 
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]

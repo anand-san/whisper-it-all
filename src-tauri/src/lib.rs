@@ -1,6 +1,7 @@
 // Declare modules
 mod api;
 mod audio;
+mod screenshot; // Declare the screenshot module
 mod state; // Declare the new api module
 
 // Use necessary items from modules and external crates
@@ -210,7 +211,8 @@ pub async fn run() {
             hide_window,
             show_window,
             request_close_recorder, // Now async
-            get_ai_response
+            get_ai_response,
+            screenshot::capture_screenshot // Add the new command
         ])
         .manage(audio_config.clone())
         .manage(app_state.clone())

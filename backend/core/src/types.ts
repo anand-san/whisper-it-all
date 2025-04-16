@@ -30,6 +30,17 @@ export interface ChatCompletionResponse {
   stream: ReadableStream;
 }
 
+// Image-to-Text API
+export interface ImageToTextRequest {
+  image: string; // Either a URL or base64 encoded image data
+  prompt?: string;
+  modelId?: string;
+}
+
+export interface ImageToTextResponse {
+  text: string;
+}
+
 // Error types
 export interface ApiError {
   message: string;

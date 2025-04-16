@@ -8,6 +8,8 @@ import {
   StreamChatSchema, // Use the streaming schema
   generateChatCompletion,
   ChatCompletionSchema,
+  processImageToText,
+  ImageToTextSchema,
 } from "./service";
 import { zValidator } from "@hono/zod-validator";
 import { cors } from "hono/cors";
@@ -107,6 +109,35 @@ app.post(
     }
   }
 );
+
+// Image-to-text endpoint using Groq vision models
+app.post("/api/vision", zValidator("json", ImageToTextSchema), async (c) => {
+  try {
+    // Extract image data, prompt, and optional modelId from request
+    const { image, prompt, modelId } = c.req.valid("json");
+    console.log(
+      "Processing image with prompt:",
+      prompt,
+      "ModelId:",
+      modelId || "(using default)"
+    );
+
+    // Process the image to text
+    const description = await processImageToText(image, prompt, modelId);
+
+    // Return the generated text description
+    return c.json({ text: description });
+  } catch (error) {
+    console.error("Image-to-text error:", error);
+    return c.json(
+      {
+        error: "Failed to process image",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      500
+    );
+  }
+});
 
 const port = 3000; // Define a port for the API server
 console.log(`Hono server ready on http://localhost:${port}`);

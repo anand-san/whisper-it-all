@@ -30,7 +30,7 @@ const WindowManager = () => {
     case "main": // Now renders the AI Interaction Window
       return (
         <>
-          <div className="min-h-[250px] grow bg-background/50 rounded-md">
+          <div className="h-screen grow bg-background/50 rounded-md">
             <div
               className="absolute top-0 h-7 w-full z-50"
               data-tauri-drag-region
