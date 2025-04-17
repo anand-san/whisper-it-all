@@ -38,7 +38,7 @@ const CustomChatMessagesList: React.FC = () => {
             key={index}
             message={message}
             isLast={index === messages.length - 1}
-            className="items-start bg-secondary/50 rounded-lg shadow-xl m-2" // Added shadow-sm for better visibility
+            className="items-start bg-secondary/50 rounded-lg shadow-xl m-2 p-2" // Added shadow-sm for better visibility
           >
             {/* Avatar based on role */}
             <ChatMessage.Avatar>
@@ -68,7 +68,7 @@ const CustomChatMessagesList: React.FC = () => {
           // Cast the message object to satisfy the type, content is enough for display
           message={{ role: "assistant", content: "" } as Message}
           isLast={true}
-          className="items-start bg-secondary/50 rounded-lg shadow-xl m-2" // Added shadow-sm for better visibility
+          className="items-start bg-secondary/50 rounded-lg shadow-xl m-2 p-2" // Added shadow-sm for better visibility
         >
           <ChatMessage.Avatar>
             <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center">
